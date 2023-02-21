@@ -1,8 +1,8 @@
 
 from eth_account import Account
-from eth_account.messages import encode_defunct
 
-MESSAGE = encode_defunct("I am verifying my ownership of this wallet.")
+from ysubs import _config
+
 
 def get_msg_signer(signature: str) -> str:
-    return Account.recover_message(MESSAGE, signature=signature)
+    return Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature)
