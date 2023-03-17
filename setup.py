@@ -12,7 +12,7 @@ setup(
         "local_scheme": "no-local-version",
         "version_scheme": "python-simplified-semver",
     },
-    description='A Python interface for ySubs',
+    description='A Python interface for ySubs smart contracts',
     author='BobTheBuidler',
     author_email='bobthebuidlerdefi@gmail.com',
     url='https://github.com/BobTheBuidler/ysubs-py',
