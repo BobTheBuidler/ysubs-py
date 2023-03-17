@@ -1,2 +1,3 @@
-dank_mids
-eth-brownie
+dank_mids>=4.20.31
+eth-brownie>=1.18.1
+ez-a-sync>=0.0.16

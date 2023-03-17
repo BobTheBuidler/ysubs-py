@@ -11,3 +11,6 @@ default_message = "I am verifying my ownership of this wallet."
 unsigned_message = os.environ.get("YSUBS_UNSIGNED_MESSAGE", default_message)
 logger.info(f'unsigned message: {unsigned_message}')
 UNSIGNED_MESSAGE = encode_defunct(text=unsigned_message)
+
+# Specify for how long a validated signaure should remain cached, in seconds
+VALIDATION_INTERVAL = int(os.environ.get("YSUBS_VALIDATION_INTERVAL", 60 * 5))
