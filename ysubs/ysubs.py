@@ -14,10 +14,13 @@ from ysubs.utils import signatures
 
 T = TypeVar('T')
 
-HeadersEscapeHatch = Union[
-    Callable[[dict], bool],
-    Callable[[dict], Awaitable[bool]]
+EscapeHatch = Union[
+    Callable[[T], bool], 
+    Callable[[T], Awaitable[bool]]
 ]
+
+RequestEscapeHatch = EscapeHatch["Request"]
+HeadersEscapeHatch = EscapeHatch[dict]
 
 
 class ySubs(ASyncGenericBase):
@@ -26,6 +29,7 @@ class ySubs(ASyncGenericBase):
         addresses: Iterable[ChecksumAddress],
         url: str,
         asynchronous: bool = False,
+        _request_escape_hatch: Optional[RequestEscapeHatch] = None,
         _headers_escape_hatch: Optional[HeadersEscapeHatch] = None,
     ) -> None:
         """
@@ -40,6 +44,14 @@ class ySubs(ASyncGenericBase):
         if not isinstance(asynchronous, bool):
             raise TypeError(f"'asynchronous' must be boolean. You passed {asynchronous}")
         self.asynchronous = asynchronous
+        
+        if _request_escape_hatch is not None and not callable(_request_escape_hatch):
+            msg = "_request_escape_hatch must a callable that accepts a Request and returns either:\n\n"
+            msg += " - a boolean value\n"
+            msg += " - an awaitable that returns a boolean when awaited.\n\n"
+            msg += f"You passed {_headers_escape_hatch}"
+            raise TypeError(msg)
+        self._request_escape_hatch = _request_escape_hatch
         
         if _headers_escape_hatch is not None and not callable(_headers_escape_hatch):
             msg = "_headers_escape_hatch must a callable that accepts a dict and returns either:\n\n"
@@ -90,7 +102,7 @@ class ySubs(ASyncGenericBase):
             raise SignatureNotAuthorized(self, signature)
 
     async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> List[int]:
-        if await self._should_use_escape_hatch(headers):
+        if await self._should_use_headers_escape_hatch(headers):
             # Escape hatch activated. Reuest will pass thru ySubs
             return True
         if "X-Signature" not in headers:
@@ -128,16 +140,27 @@ class ySubs(ASyncGenericBase):
         from starlette.requests import HTTPConnection
         class SignatureMiddleware(BaseHTTPMiddleware):
             async def dispatch(self_mw, request: HTTPConnection, call_next: Callable[[HTTPConnection], T]) -> T:
-                try:
-                    await self.validate_signature_from_headers(request.headers)
-                except BadInput as e:
-                    return response_cls(status_code=400, content={'message': str(e)})
-                except SignatureError as e:
-                    return response_cls(status_code=401, content={'message': str(e)})
+                if not await self._should_use_requests_escape_hatch(request):
+                    try:
+                        await self.validate_signature_from_headers(request.headers)
+                    except BadInput as e:
+                        return response_cls(status_code=400, content={'message': str(e)})
+                    except SignatureError as e:
+                        return response_cls(status_code=401, content={'message': str(e)})
                 return await call_next(request)
         return SignatureMiddleware
     
-    async def _should_use_escape_hatch(self, headers: dict) -> bool:
+    async def _should_use_requests_escape_hatch(self, request: "Request") -> bool:
+        if self._request_escape_hatch is None:
+            return False
+        hatch = self._request_escape_hatch(request)
+        if isawaitable(hatch):
+            hatch = await hatch
+        if isinstance(hatch, bool):
+            return hatch
+        raise TypeError(f"_request_escape_hatch must return a boolean value or an awaitable that returns a boolean when awaited. Yours returned {hatch}")
+    
+    async def _should_use_headers_escape_hatch(self, headers: dict) -> bool:
         if self._headers_escape_hatch is None:
             return False
         hatch = self._headers_escape_hatch(headers)
