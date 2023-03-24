@@ -138,9 +138,11 @@ class ySubs(ASyncGenericBase):
     def _get_starlette_middleware(self, response_cls: type):
         from starlette.middleware.base import BaseHTTPMiddleware
         from starlette.requests import HTTPConnection
+        # NOTE: We don't want to block any files used for the documentation pages.
+        do_not_block = ["/favicon.ico", "/openapi.json"]
         class SignatureMiddleware(BaseHTTPMiddleware):
             async def dispatch(self_mw, request: HTTPConnection, call_next: Callable[[HTTPConnection], T]) -> T:
-                if not await self._should_use_requests_escape_hatch(request):
+                if not self_mw.__is_documenation(request.url.path) and not await self._should_use_requests_escape_hatch(request):
                     try:
                         await self.validate_signature_from_headers(request.headers)
                     except BadInput as e:
@@ -148,6 +150,9 @@ class ySubs(ASyncGenericBase):
                     except SignatureError as e:
                         return response_cls(status_code=401, content={'message': str(e)})
                 return await call_next(request)
+            def __is_documenation(self_mw, path: str):
+                """We don't want to block calls to the documentation pages."""
+                return path.startswith("/docs") or path in do_not_block
         return SignatureMiddleware
     
     async def _should_use_requests_escape_hatch(self, request: "Request") -> bool:
