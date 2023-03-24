@@ -70,6 +70,15 @@ class ySubs(ASyncGenericBase):
     ###############
     
     @property
+    def fastapi_middleware(self):
+        try:
+            from fastapi.middleware import Middleware
+            from fastapi.responses import JSONResponse
+        except ImportError:
+            raise ImportError("fastapi is not installed.")
+        return Middleware(self._get_starlette_middleware(JSONResponse))
+    
+    @property
     def starlette_middleware(self):
         try:
             from starlette.responses import JSONResponse
