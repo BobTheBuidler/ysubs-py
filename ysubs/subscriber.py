@@ -19,7 +19,10 @@ from ysubs.utils.dank_mids import dank_w3
 class Subscriber(ASyncGenericBase):
     def __init__(self, address: ChecksumAddress, asynchronous: bool = False) -> None:
         self.asynchronous = asynchronous
-        self.contract = patch_contract(Contract(address), dank_w3)
+        try:
+            self.contract = patch_contract(Contract(address), dank_w3)
+        except ValueError:
+            self.contract = patch_contract(Contract.from_explorer(address), dank_w3)
     
     @a_sync.aka.cached_property
     async def version(self) -> Version:
