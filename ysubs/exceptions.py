@@ -9,7 +9,9 @@ class SignatureError(Exception):
 
 class SignatureNotProvided(SignatureError):
     def __init__(self, ysubs: "ySubs", headers: dict):
-        super().__init__(f'You must subscribe to a plan at {ysubs.url} and pass the provided signature as a header param "X-Signature".', headers)
+        msg = f'You must subscribe to a plan at {ysubs.url} and pass the provided signature as header param "X-Signature\n\n"'
+        msg += f'Your headers: {headers}'
+        super().__init__(msg)
 
 class SignatureNotAuthorized(SignatureError):
     def __init__(self, ysubs: "ySubs", signature: str):
