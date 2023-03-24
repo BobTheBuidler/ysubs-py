@@ -103,6 +103,7 @@ class ySubs(ASyncGenericBase):
     
     @property
     def fastapi_middleware(self):
+        """Fastapi middleware is just a wrapper around a starlette middleware that returns a JSONResponse defined by fastapi instead of by starlette."""
         try:
             from fastapi.middleware import Middleware
             from fastapi.responses import JSONResponse
