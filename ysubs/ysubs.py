@@ -85,7 +85,7 @@ class ySubs(ASyncGenericBase):
         Returns all active subscriptions for the user who signed 'signature'
         """
         try:
-            return self.get_active_subscripions(signature)
+            return await self.get_active_subscripions(signature)
         except NoActiveSubscriptions:
             raise SignatureNotAuthorized(self, signature)
 
