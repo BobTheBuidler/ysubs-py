@@ -59,3 +59,36 @@ class ySubs(ASyncGenericBase):
             return self.get_active_subscripions(signature)
         except NoActiveSubscriptions:
             raise SignatureNotAuthorized(self, signature)
+
+    async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> List[int]:
+        if "X-Signature" not in headers:
+            raise SignatureNotProvided(self, headers)
+        return await self.validate_signature(headers["X-Signature"])
+    
+    ###############
+    # Middlewares #
+    ###############
+    
+    @property
+    def starlette_middleware(self):
+        try:
+            from starlette.responses import JSONResponse
+        except ImportError:
+            raise ImportError("starlette is not installed.")
+        return self._get_starlette_middleware(JSONResponse)
+    
+    ############
+    # Internal #
+    ############
+    
+    def _get_starlette_middleware(self, response_cls: type):
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from starlette.requests import HTTPConnection
+        class SignatureMiddleware(BaseHTTPMiddleware):
+            async def dispatch(self_mw, request: HTTPConnection, call_next: Callable[[HTTPConnection], T]) -> T:
+                try:
+                    await self.validate_signature_from_headers(request.headers)
+                except SignatureError as e:
+                    return response_cls(status_code=401, content={'message': str(e)})
+                return await call_next(request)
+        return SignatureMiddleware
