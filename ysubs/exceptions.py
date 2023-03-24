@@ -16,7 +16,15 @@ class SignatureNotProvided(SignatureError):
 class SignatureNotAuthorized(SignatureError):
     def __init__(self, ysubs: "ySubs", signature: str):
         super().__init__(f"Signature {signature} does not have an active subscription. Please purchase one at {ysubs.url}")
-
+    
 class NoActiveSubscriptions(Exception):
     def __init__(self, signer: str):
         super().__init__(f"No active subscriptions for {signer}")
+
+class InputError(ValueError):
+    def __init__(self, *args, **kwargs):
+        # NOTE Sometimes we just pass in an Exception as input here and want to convert it to a string.
+        super().__init__(*[str(arg) if isinstance(arg, Exception) else arg for arg in args], **kwargs)
+
+class MalformedSignature(InputError):
+    pass

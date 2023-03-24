@@ -1,8 +1,12 @@
 
+import binascii
+
+import eth_keys.validation
 from brownie import convert
 from eth_account import Account
 
 from ysubs import _config
+from ysubs.exceptions import MalformedSignature
 
 
 def get_msg_signer(signer_or_signature: str) -> str:
@@ -14,4 +18,11 @@ def get_msg_signer(signer_or_signature: str) -> str:
         return get_signer_from_signature(signer_or_signature)
     
 def get_signer_from_signature(signature: str) -> str:
-    return Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature)
+    try:
+        return Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature)
+    except binascii.Error as e:
+        raise MalformedSignature(e)
+    except eth_keys.validation.ValidationError as e:
+        if "Unexpected recoverable signature length:" in str(e):
+            raise MalformedSignature(f"The signature you provided does not have the correct length.")
+        raise MalformedSignature(e)
