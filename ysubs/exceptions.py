@@ -21,10 +21,10 @@ class NoActiveSubscriptions(Exception):
     def __init__(self, signer: str):
         super().__init__(f"No active subscriptions for {signer}")
 
-class InputError(ValueError):
+class BadInput(ValueError):
     def __init__(self, *args, **kwargs):
         # NOTE Sometimes we just pass in an Exception as input here and want to convert it to a string.
         super().__init__(*[str(arg) if isinstance(arg, Exception) else arg for arg in args], **kwargs)
 
-class MalformedSignature(InputError):
+class MalformedSignature(BadInput):
     pass

@@ -6,7 +6,7 @@ from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
 from a_sync import ASyncGenericBase
 from eth_typing import ChecksumAddress
 
-from ysubs.exceptions import (NoActiveSubscriptions, SignatureError,
+from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
                               SignatureNotAuthorized, SignatureNotProvided)
 from ysubs.plan import Plan
 from ysubs.subscriber import Subscriber
@@ -129,6 +129,8 @@ class ySubs(ASyncGenericBase):
             async def dispatch(self_mw, request: HTTPConnection, call_next: Callable[[HTTPConnection], T]) -> T:
                 try:
                     await self.validate_signature_from_headers(request.headers)
+                except BadInput as e:
+                    return response_cls(status_code=400, content={'message': str(e)})
                 except SignatureError as e:
                     return response_cls(status_code=401, content={'message': str(e)})
                 return await call_next(request)
