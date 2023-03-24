@@ -1,7 +1,7 @@
 import asyncio
 from inspect import isawaitable
 from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
-                    Union)
+                    TypeVar, Union)
 
 from a_sync import ASyncGenericBase
 from eth_typing import ChecksumAddress
@@ -11,6 +11,8 @@ from ysubs.exceptions import (NoActiveSubscriptions, SignatureError,
 from ysubs.plan import Plan
 from ysubs.subscriber import Subscriber
 from ysubs.utils import signatures
+
+T = TypeVar('T')
 
 HeadersEscapeHatch = Union[
     Callable[[dict], bool],
