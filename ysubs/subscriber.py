@@ -12,7 +12,7 @@ from semantic_version import Version
 
 from ysubs import _config
 from ysubs.plan import Plan
-from ysubs.utils import signatures
+from ysubs.utils import signatures, tracing
 from ysubs.utils.dank_mids import dank_w3
 
 
@@ -29,10 +29,12 @@ class Subscriber(ASyncGenericBase):
         return Version(await self.contract.API_VERSION.coroutine())
     
     @a_sync.aka.property
+    @tracing.trace
     async def num_plans(self) -> int:
         return await self.contract.num_plans.coroutine()
     
     @a_sync.aka.property
+    @tracing.trace
     async def active_plan_ids(self) -> List[int]:
         return list(range(1, await self.__num_plans__(sync=False)))
     
@@ -42,13 +44,18 @@ class Subscriber(ASyncGenericBase):
             return Plan(await self.contract.get_plan.coroutine(plan_id))
         raise ValueError(f"{plan_id} is not a valid plan_id.")
     
+    @tracing.trace
+    async def subscription_end(self, plan_id: int, signer: ChecksumAddress) -> int:
+        return await self.contract.subscription_end.coroutine(plan_id, signer)
+    
     @a_sync.a_sync(ram_cache_ttl=_config.VALIDATION_INTERVAL)
     async def get_all_plans(self) -> List[Plan]:
         return await asyncio.gather(*[self.get_plan(plan_id, sync=False) for plan_id in await self.__active_plan_ids__(sync=False)])
     
+    @tracing.trace
     async def get_active_subscriptions(self, signer_or_signature: str) -> List[Plan]:
         plan_ids = await self.__active_plan_ids__(sync=False)
         signer = signatures.get_msg_signer(signer_or_signature)
-        ends = await asyncio.gather(*[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids])
+        ends = await asyncio.gather(*[self.subscription_end(i, signer) for i in plan_ids])
         now = datetime.utcnow()
         return [id for end, id in zip(ends, plan_ids) if end and datetime.fromtimestamp(end) > now]
