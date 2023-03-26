@@ -10,7 +10,7 @@ from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
                               SignatureNotAuthorized, SignatureNotProvided)
 from ysubs.plan import Plan
 from ysubs.subscriber import Subscriber
-from ysubs.utils import signatures
+from ysubs.utils import signatures, tracing
 
 T = TypeVar('T')
 
@@ -78,6 +78,7 @@ class ySubs(ASyncGenericBase):
     # Informational #
     #################
     
+    @tracing.trace
     async def get_active_subscripions(self, signer_or_signature: str, _raise: bool = True) -> List[Plan]:
         """
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
@@ -92,6 +93,7 @@ class ySubs(ASyncGenericBase):
     # Validation #
     ##############
     
+    @tracing.trace
     async def validate_signature(self, signature: str) -> List[Plan]:
         """
         Returns all active subscriptions for the user who signed 'signature'
@@ -100,7 +102,8 @@ class ySubs(ASyncGenericBase):
             return await self.get_active_subscripions(signature)
         except NoActiveSubscriptions:
             raise SignatureNotAuthorized(self, signature)
-
+            
+    @tracing.trace
     async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> List[int]:
         if await self._should_use_headers_escape_hatch(headers):
             # Escape hatch activated. Reuest will pass thru ySubs
