@@ -29,6 +29,7 @@ class Subscriber(ASyncGenericBase):
         return Version(await self.contract.API_VERSION.coroutine())
     
     @a_sync.aka.property
+    @tracing.trace
     async def num_plans(self) -> int:
         return await self.contract.num_plans.coroutine()
     
