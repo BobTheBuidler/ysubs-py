@@ -1,7 +1,10 @@
 
 from typing import Optional
 
-from ysubs.exceptions import SignatureInvalid
+from eth_account.messages import encode_defunct
+
+from ysubs import _config
+from ysubs.exceptions import NoMessageSpecified, SignatureInvalid
 from ysubs.utils import signatures
 
 
@@ -24,10 +27,14 @@ class Plan:
 
 
 class FreeTrial(Plan):
-    def __init__(self, rate_limit: int):
+    def __init__(self, rate_limit: int, unsigned_message: Optional[str] = None):
         super().__init__(name="Free Trial", price=0, rate_limit=rate_limit, time_interval="Not Implemented", is_active=True)
-        self.unsigned_msg = ""
-    
+        try:
+            self.unsigned_msg = encode_defunct(text=unsigned_message or _config.unsigned_trial_message)
+        except TypeError as e:
+            if str(e) == "Exactly one of the passed values can be specified. Instead, values were: (None,), {'hexstr': None, 'text': None}":
+                raise NoMessageSpecified("You must provide the unsigned message to use for your free trial, either with the 'unsigned_message' kwarg or the 'YSUBS_FREE_RIAL_MESSAGE' env var.")
+            raise e
     def confirm_signer(self, signer, signature: str) -> str:
         try:
             signatures.validate_signer_with_signature(signer, signature, message=self.unsigned_msg)
