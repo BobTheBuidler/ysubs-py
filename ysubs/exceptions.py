@@ -28,3 +28,7 @@ class BadInput(ValueError):
 
 class MalformedSignature(BadInput):
     pass
+
+class TooManyRequests(Exception):
+    def __init__(self, time_til_next_request: float):
+        super().__init__(f"You can make your next request in {round(time_til_next_request, 2)} seconds.")

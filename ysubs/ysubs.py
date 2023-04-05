@@ -7,9 +7,11 @@ from a_sync import ASyncGenericBase
 from eth_typing import ChecksumAddress
 
 from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
-                              SignatureNotAuthorized, SignatureNotProvided)
+                              SignatureNotAuthorized, SignatureNotProvided,
+                              TooManyRequests)
 from ysubs.plan import Plan
 from ysubs.subscriber import Subscriber
+from ysubs.subscription import Subscription, SubscriptionsLimiter
 from ysubs.utils import signatures
 
 T = TypeVar('T')
@@ -78,7 +80,7 @@ class ySubs(ASyncGenericBase):
     # Informational #
     #################
     
-    async def get_active_subscripions(self, signer_or_signature: str, _raise: bool = True) -> List[Plan]:
+    async def get_active_subscripions(self, signer_or_signature: str, _raise: bool = True) -> List[Subscription]:
         """
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
         """
@@ -92,16 +94,19 @@ class ySubs(ASyncGenericBase):
     # Validation #
     ##############
     
-    async def validate_signature(self, signature: str) -> List[Plan]:
+    async def get_limiter(self, signer_or_signature: str) -> SubscriptionsLimiter:
+        return SubscriptionsLimiter(await self.get_active_subscripions(signer_or_signature, sync=False))
+    
+    async def validate_signature(self, signature: str) -> SubscriptionsLimiter:
         """
         Returns all active subscriptions for the user who signed 'signature'
         """
         try:
-            return await self.get_active_subscripions(signature)
+            return await self.get_limiter(signature)
         except NoActiveSubscriptions:
             raise SignatureNotAuthorized(self, signature)
 
-    async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> List[int]:
+    async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> SubscriptionsLimiter:
         if await self._should_use_headers_escape_hatch(headers):
             # Escape hatch activated. Reuest will pass thru ySubs
             return True
@@ -144,12 +149,13 @@ class ySubs(ASyncGenericBase):
             async def dispatch(self_mw, request: HTTPConnection, call_next: Callable[[HTTPConnection], T]) -> T:
                 if not self_mw.__is_documenation(request.url.path) and not await self._should_use_requests_escape_hatch(request):
                     try:
-                        await self.validate_signature_from_headers(request.headers)
+                        user_limiter = await self.validate_signature_from_headers(request.headers)
+                        with user_limiter:
+                            return await call_next(request)
                     except BadInput as e:
                         return response_cls(status_code=400, content={'message': str(e)})
-                    except SignatureError as e:
+                    except (SignatureError, TooManyRequests) as e:
                         return response_cls(status_code=401, content={'message': str(e)})
-                return await call_next(request)
             def __is_documenation(self_mw, path: str):
                 """We don't want to block calls to the documentation pages."""
                 return path.startswith("/docs") or path in do_not_block

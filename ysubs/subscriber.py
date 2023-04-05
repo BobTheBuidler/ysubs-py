@@ -12,6 +12,7 @@ from semantic_version import Version
 
 from ysubs import _config
 from ysubs.plan import Plan
+from ysubs.subscription import Subscription
 from ysubs.utils import signatures
 from ysubs.utils.dank_mids import dank_w3
 
@@ -47,9 +48,13 @@ class Subscriber(ASyncGenericBase):
     async def get_all_plans(self) -> List[Plan]:
         return await asyncio.gather(*[self.get_plan(plan_id, sync=False) for plan_id in await self.__active_plan_ids__(sync=False)])
     
-    async def get_active_subscriptions(self, signer_or_signature: str) -> List[Plan]:
+    @a_sync.a_sync(cache_type='memory')
+    async def get_subscription(self, signer: str, plan_id: int) -> Subscription:
+        return Subscription(signer, await self.get_plan(plan_id))
+    
+    async def get_active_subscriptions(self, signer_or_signature: str) -> List[Subscription]:
         plan_ids = await self.__active_plan_ids__(sync=False)
         signer = signatures.get_msg_signer(signer_or_signature)
         ends = await asyncio.gather(*[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids])
         now = datetime.utcnow()
-        return [id for end, id in zip(ends, plan_ids) if end and datetime.fromtimestamp(end) > now]
+        return await asyncio.gather(*[self.get_subscription(signer, id) for end, id in zip(ends, plan_ids) if end and datetime.fromtimestamp(end) > now])
