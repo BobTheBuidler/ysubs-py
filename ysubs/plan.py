@@ -1,6 +1,9 @@
 
 from typing import Optional
 
+from ysubs.exceptions import SignatureInvalid
+from ysubs.utils import signatures
+
 
 class Plan:
     def __init__(
@@ -18,3 +21,17 @@ class Plan:
     
     def __repr__(self) -> str:
         return f"<Plan {self.name}>" if self.name else f"<Unnamed Plan>"
+
+
+class FreeTrial(Plan):
+    def __init__(self, rate_limit: int):
+        super().__init__(name="Free Trial", price=0, rate_limit=rate_limit, time_interval="Not Implemented", is_active=True)
+        self.unsigned_msg = ""
+    
+    def confirm_signer(self, signer, signature: str) -> str:
+        try:
+            signatures.validate_signer_with_signature(signer, signature, message=self.unsigned_msg)
+            return True
+        except SignatureInvalid:
+            return False
+    

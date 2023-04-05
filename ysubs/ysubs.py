@@ -5,11 +5,12 @@ from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
 
 from a_sync import ASyncGenericBase
 from eth_typing import ChecksumAddress
+from functools import lru_cache
 
-from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
+from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,SignatureInvalid,
                               SignatureNotAuthorized, SignatureNotProvided,
                               TooManyRequests)
-from ysubs.plan import Plan
+from ysubs.plan import FreeTrial, Plan
 from ysubs.subscriber import Subscriber
 from ysubs.subscription import Subscription, SubscriptionsLimiter
 from ysubs.utils import signatures
@@ -31,6 +32,7 @@ class ySubs(ASyncGenericBase):
         addresses: Iterable[ChecksumAddress],
         url: str,
         asynchronous: bool = False,
+        free_trial_rate_limit: Optional[int] = None,
         _request_escape_hatch: Optional[RequestEscapeHatch] = None,
         _headers_escape_hatch: Optional[HeadersEscapeHatch] = None,
     ) -> None:
@@ -46,6 +48,10 @@ class ySubs(ASyncGenericBase):
         if not isinstance(asynchronous, bool):
             raise TypeError(f"'asynchronous' must be boolean. You passed {asynchronous}")
         self.asynchronous = asynchronous
+        
+        if free_trial_rate_limit is not None and not isinstance(free_trial_rate_limit, int):
+            raise TypeError(f"'free_trial_rate_limit' must be an integer or 'None'. You passed {free_trial_rate_limit}")
+        self.free_trial = FreeTrial(free_trial_rate_limit)
         
         if _request_escape_hatch is not None and not callable(_request_escape_hatch):
             msg = "_request_escape_hatch must a callable that accepts a Request and returns either:\n\n"
@@ -64,6 +70,7 @@ class ySubs(ASyncGenericBase):
         self._headers_escape_hatch = _headers_escape_hatch
         
         self.subscribers = [Subscriber(address, asynchronous=asynchronous) for address in addresses]
+        self._free_trials: Dict[str, Subscription] = {}
     
     ##########
     # System #
@@ -75,16 +82,19 @@ class ySubs(ASyncGenericBase):
         """
         plans = await asyncio.gather(*[subscriber.get_all_plans(sync=False) for subscriber in self.subscribers])
         return dict(zip(self.subscribers, plans))
+
+    @lru_cache(maxsize=None)
+    async def get_free_trial(self, signer: str) -> Subscription:
+        return Subscription(signer, self.free_trial)
     
     #################
     # Informational #
     #################
     
-    async def get_active_subscripions(self, signer_or_signature: str, _raise: bool = True) -> List[Subscription]:
+    async def get_active_subscripions(self, signer: str, _raise: bool = True) -> List[Subscription]:
         """
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
         """
-        signer = signatures.get_msg_signer(signer_or_signature)
         active_subscriptions = [sub for subs in await asyncio.gather(*[subscriber.get_active_subscripions(signer, sync=False) for subscriber in self.subscribers]) for sub in subs if sub]
         if not active_subscriptions and _raise is True:
             raise NoActiveSubscriptions(signer)
@@ -94,15 +104,18 @@ class ySubs(ASyncGenericBase):
     # Validation #
     ##############
     
-    async def get_limiter(self, signer_or_signature: str) -> SubscriptionsLimiter:
-        return SubscriptionsLimiter(await self.get_active_subscripions(signer_or_signature, sync=False))
+    async def get_limiter(self, signer: str, signature: str) -> SubscriptionsLimiter:
+        if self.free_trial.confirm_signer(signer, signature):
+            return SubscriptionsLimiter([self.get_free_trial(signer)])
+        signatures.validate_signer_with_signature(signer, signature)
+        return SubscriptionsLimiter(await self.get_active_subscripions(signer, sync=False))
     
-    async def validate_signature(self, signature: str) -> SubscriptionsLimiter:
+    async def validate_signature(self, signer: str, signature: str) -> SubscriptionsLimiter:
         """
         Returns all active subscriptions for the user who signed 'signature'
         """
         try:
-            return await self.get_limiter(signature)
+            return await self.get_limiter(signer, signature)
         except NoActiveSubscriptions:
             raise SignatureNotAuthorized(self, signature)
 
@@ -112,7 +125,7 @@ class ySubs(ASyncGenericBase):
             return True
         if "X-Signature" not in headers:
             raise SignatureNotProvided(self, headers)
-        return await self.validate_signature(headers["X-Signature"])
+        return await self.validate_signature(headers["X-Signer"], headers["X-Signature"])
     
     ###############
     # Middlewares #

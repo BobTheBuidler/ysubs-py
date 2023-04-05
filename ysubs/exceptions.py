@@ -16,6 +16,10 @@ class SignatureNotProvided(SignatureError):
 class SignatureNotAuthorized(SignatureError):
     def __init__(self, ysubs: "ySubs", signature: str):
         super().__init__(f"Signature {signature} does not have an active subscription. Please purchase one at {ysubs.url}")
+
+class SignatureInvalid(SignatureError):
+    def __init__(self, signer: str, signature: str):
+        super().__init__(f"Signature {signature} is not valid for signer {signer}")
     
 class NoActiveSubscriptions(Exception):
     def __init__(self, signer: str):
