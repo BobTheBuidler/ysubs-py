@@ -39,7 +39,8 @@ class Subscriber(ASyncGenericBase):
     @a_sync.a_sync(cache_type='memory')
     async def get_plan(self, plan_id: int) -> Optional[Plan]:
         if plan_id > 0:
-            return Plan(await self.contract.get_plan.coroutine(plan_id))
+            details = await self.contract.get_plan.coroutine(plan_id)
+            return Plan(**details.dict())
         raise ValueError(f"{plan_id} is not a valid plan_id.")
     
     @a_sync.a_sync(ram_cache_ttl=_config.VALIDATION_INTERVAL)
