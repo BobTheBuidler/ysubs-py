@@ -168,9 +168,11 @@ class ySubs(ASyncGenericBase):
                 if not self_mw.__is_documenation(request.url.path) and not await self._should_use_requests_escape_hatch(request):
                     try:
                         user_limiter = await self.validate_signature_from_headers(request.headers)
+                        if sentry_sdk and "X-Signer" in request.headers:
+                            sentry_sdk.set_user({'id': request.headers["X-Signer"]})
+                        if user_limiter is True:
+                            return await call_next(request)
                         with user_limiter:
-                            if sentry_sdk:
-                                sentry_sdk.set_user({'id': request.headers["X-Signer"]})
                             return await call_next(request)
                     except BadInput as e:
                         return response_cls(status_code=400, content={'message': str(e)})
