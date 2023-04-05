@@ -1,15 +1,15 @@
 import asyncio
+from functools import lru_cache
 from inspect import isawaitable
 from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
                     TypeVar, Union)
 
 from a_sync import ASyncGenericBase
 from eth_typing import ChecksumAddress
-from functools import lru_cache
 
-from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,SignatureInvalid,
+from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
                               SignatureNotAuthorized, SignatureNotProvided,
-                              TooManyRequests)
+                              SignerNotProvided, TooManyRequests)
 from ysubs.plan import FreeTrial, Plan
 from ysubs.subscriber import Subscriber
 from ysubs.subscription import Subscription, SubscriptionsLimiter
@@ -128,6 +128,8 @@ class ySubs(ASyncGenericBase):
         if await self._should_use_headers_escape_hatch(headers):
             # Escape hatch activated. Reuest will pass thru ySubs
             return True
+        if "X-Signer" not in headers:
+            raise SignerNotProvided(self, headers)
         if "X-Signature" not in headers:
             raise SignatureNotProvided(self, headers)
         return await self.validate_signature(headers["X-Signer"], headers["X-Signature"], sync=False)
