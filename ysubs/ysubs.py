@@ -171,10 +171,10 @@ class ySubs(ASyncGenericBase):
                     return await call_next(request)
                 try:
                     user_limiter = await self.validate_signature_from_headers(request.headers)
-                    if sentry_sdk and "X-Signer" in request.headers:
-                        sentry_sdk.set_user({'id': request.headers["X-Signer"]})
                     if user_limiter is True:
                         return await call_next(request)
+                    if sentry_sdk:
+                        sentry_sdk.set_user({'id': request.headers["X-Signer"]})
                     with user_limiter:
                         return await call_next(request)
                 except BadInput as e:
