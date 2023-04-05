@@ -165,19 +165,21 @@ class ySubs(ASyncGenericBase):
         do_not_block = ["/favicon.ico", "/openapi.json"]
         class SignatureMiddleware(BaseHTTPMiddleware):
             async def dispatch(self_mw, request: HTTPConnection, call_next: Callable[[HTTPConnection], T]) -> T:
-                if not self_mw.__is_documenation(request.url.path) and not await self._should_use_requests_escape_hatch(request):
-                    try:
-                        user_limiter = await self.validate_signature_from_headers(request.headers)
-                        if sentry_sdk and "X-Signer" in request.headers:
-                            sentry_sdk.set_user({'id': request.headers["X-Signer"]})
-                        if user_limiter is True:
-                            return await call_next(request)
-                        with user_limiter:
-                            return await call_next(request)
-                    except BadInput as e:
-                        return response_cls(status_code=400, content={'message': str(e)})
-                    except (SignatureError, TooManyRequests) as e:
-                        return response_cls(status_code=401, content={'message': str(e)})
+                if self_mw.__is_documenation(request.url.path) or await self._should_use_requests_escape_hatch(request):
+                    return await call_next(request)
+                try:
+                    user_limiter = await self.validate_signature_from_headers(request.headers)
+                    if sentry_sdk and "X-Signer" in request.headers:
+                        sentry_sdk.set_user({'id': request.headers["X-Signer"]})
+                    if user_limiter is True:
+                        return await call_next(request)
+                    with user_limiter:
+                        return await call_next(request)
+                except BadInput as e:
+                    return response_cls(status_code=400, content={'message': str(e)})
+                except (SignatureError, TooManyRequests) as e:
+                    return response_cls(status_code=401, content={'message': str(e)})
+                
             def __is_documenation(self_mw, path: str):
                 """We don't want to block calls to the documentation pages."""
                 return path.startswith("/docs") or path in do_not_block
