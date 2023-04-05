@@ -51,7 +51,7 @@ class ySubs(ASyncGenericBase):
         
         if free_trial_rate_limit is not None and not isinstance(free_trial_rate_limit, int):
             raise TypeError(f"'free_trial_rate_limit' must be an integer or 'None'. You passed {free_trial_rate_limit}")
-        self.free_trial = FreeTrial(free_trial_rate_limit)
+        self.free_trial = FreeTrial(free_trial_rate_limit) if free_trial_rate_limit else None
         
         if _request_escape_hatch is not None and not callable(_request_escape_hatch):
             msg = "_request_escape_hatch must a callable that accepts a Request and returns either:\n\n"
