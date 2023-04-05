@@ -84,7 +84,7 @@ class ySubs(ASyncGenericBase):
         return dict(zip(self.subscribers, plans))
 
     @lru_cache(maxsize=None)
-    async def get_free_trial(self, signer: str) -> Subscription:
+    def _get_free_trial(self, signer: str) -> Subscription:
         return Subscription(signer, self.free_trial)
     
     #################
@@ -106,7 +106,7 @@ class ySubs(ASyncGenericBase):
     
     async def get_limiter(self, signer: str, signature: str) -> SubscriptionsLimiter:
         if self.free_trial.confirm_signer(signer, signature):
-            return SubscriptionsLimiter([self.get_free_trial(signer)])
+            return SubscriptionsLimiter([self._get_free_trial(signer)])
         signatures.validate_signer_with_signature(signer, signature)
         return SubscriptionsLimiter(await self.get_active_subscripions(signer, sync=False))
     
@@ -115,7 +115,7 @@ class ySubs(ASyncGenericBase):
         Returns all active subscriptions for the user who signed 'signature'
         """
         try:
-            return await self.get_limiter(signer, signature)
+            return await self.get_limiter(signer, signature, sync=False)
         except NoActiveSubscriptions:
             raise SignatureNotAuthorized(self, signature)
 
@@ -125,7 +125,7 @@ class ySubs(ASyncGenericBase):
             return True
         if "X-Signature" not in headers:
             raise SignatureNotProvided(self, headers)
-        return await self.validate_signature(headers["X-Signer"], headers["X-Signature"])
+        return await self.validate_signature(headers["X-Signer"], headers["X-Signature"], sync=False)
     
     ###############
     # Middlewares #
