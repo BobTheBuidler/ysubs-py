@@ -55,7 +55,7 @@ class ySubs(ASyncGenericBase):
         
         if _request_escape_hatch is not None and not callable(_request_escape_hatch):
             msg = "_request_escape_hatch must a callable that accepts a Request and returns either:\n\n"
-            msg += " - a boolean value\n"
+        self.free_trial = FreeTrial(free_trial_rate_limit) if free_trial_rate_limit else None
             msg += " - an awaitable that returns a boolean when awaited.\n\n"
             msg += f"You passed {_headers_escape_hatch}"
             raise TypeError(msg)
