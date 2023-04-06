@@ -1,18 +1,19 @@
 
 import binascii
-from typing import Optional
 
 import eth_keys.validation
+from brownie.convert.datatypes import EthAddress
 from eth_account import Account
 
 from ysubs import _config
 from ysubs.exceptions import MalformedSignature, SignatureInvalid
 
 
-def validate_signer_with_signature(signer: str, signature: str) -> None:
+def validate_signer_with_signature(signer: EthAddress, signature: str) -> None:
     try:
         if signer == Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature):
             return
+        raise Exception(signer, signature, Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature))
         raise SignatureInvalid(signer, signature)
     except binascii.Error as e:
         raise MalformedSignature(e)
