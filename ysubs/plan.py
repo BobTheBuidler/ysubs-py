@@ -29,18 +29,13 @@ class Plan:
 
 
 class FreeTrial(Plan):
-    def __init__(self, rate_limit: int, unsigned_message: Optional[str] = None):
-        super().__init__(name="Free Trial", price=0, rate_limit=rate_limit, time_interval="Not Implemented", is_active=True)
-        try:
-            self.unsigned_msg = encode_defunct(text=unsigned_message or _config.unsigned_trial_message)
-        except TypeError as e:
-            if str(e) == "Exactly one of the passed values can be specified. Instead, values were: (None,), {'hexstr': None, 'text': None}":
-                raise NoMessageSpecified("You must provide the unsigned message to use for your free trial, either with the 'unsigned_message' kwarg or the 'YSUBS_FREE_RIAL_MESSAGE' env var.")
-            raise e
-    def confirm_signer(self, signer, signature: str) -> str:
-        try:
-            signatures.validate_signer_with_signature(signer, signature, message=self.unsigned_msg)
-            return True
-        except SignatureInvalid:
-            return False
+    def __init__(self, rate_limit_per_minute: int):
+        super().__init__(
+            name="Free Trial",
+            price=0,
+            rate_limit_per_minute=rate_limit_per_minute,
+            rate_limit_per_day=rate_limit_per_minute * 60 * 24,
+            time_interval="Not Implemented",
+            is_active=True,
+        )
     

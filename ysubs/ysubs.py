@@ -101,8 +101,11 @@ class ySubs(ASyncGenericBase):
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
         """
         active_subscriptions = [sub for subs in await asyncio.gather(*[subscriber.get_active_subscripions(signer, sync=False) for subscriber in self.subscribers]) for sub in subs if sub]
-        if not active_subscriptions and _raise is True:
-            raise NoActiveSubscriptions(signer)
+        if not active_subscriptions:
+            if self.free_trial is not None:
+                active_subscriptions.append(self._get_free_trial(signer))
+            elif _raise is True:
+                raise NoActiveSubscriptions(signer)
         return active_subscriptions
     
     ##############
@@ -110,8 +113,6 @@ class ySubs(ASyncGenericBase):
     ##############
     
     async def get_limiter(self, signer: str, signature: str) -> SubscriptionsLimiter:
-        if self.free_trial.confirm_signer(signer, signature):
-            return SubscriptionsLimiter([self._get_free_trial(signer)])
         signatures.validate_signer_with_signature(signer, signature)
         return SubscriptionsLimiter(await self.get_active_subscripions(signer, sync=False))
     
