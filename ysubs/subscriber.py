@@ -35,7 +35,7 @@ class Subscriber(ASyncGenericBase):
     
     @a_sync.aka.property
     async def active_plan_ids(self) -> List[int]:
-        return list(range(1, await self.__num_plans__(sync=False)))
+        return list(range(1, await self.__plan_count__(sync=False)))
     
     @a_sync.a_sync(cache_type='memory')
     async def get_plan(self, plan_id: int) -> Optional[Plan]:
