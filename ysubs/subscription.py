@@ -39,15 +39,11 @@ class Subscription:
     
     @property
     def time_til_next_request(self) -> float:
-        if self.should_rate_limit is False:
-            return 0
-        try:
-            return max([
-                self.requests_this_minute[0] + 60,
-                self.requests_this_day[0] + 60 * 60 * 24,
-            ])
-        except IndexError:
-            return 0
+        if self.daily_limit_reached:
+            return self.requests_this_day[0] + 60 * 60 * 24
+        elif self.minute_limit_reached:
+            return self.requests_this_minute[0] + 60
+        return 0
     
     @property
     def daily_limit_reached(self) -> bool:
