@@ -2,14 +2,17 @@ import asyncio
 from functools import lru_cache
 from inspect import isawaitable
 from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
-                    TypeVar, Union)
+                    Set, TypeVar, Union)
 
 from a_sync import ASyncGenericBase
+from brownie import convert
+from brownie.convert.datatypes import EthAddress
 from eth_typing import ChecksumAddress
 
 from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
                               SignatureNotAuthorized, SignatureNotProvided,
-                              SignerNotProvided, TooManyRequests)
+                              SignerInvalid, SignerNotProvided,
+                              TooManyRequests)
 from ysubs.plan import FreeTrial, Plan
 from ysubs.subscriber import Subscriber
 from ysubs.subscription import Subscription, SubscriptionsLimiter
@@ -76,6 +79,7 @@ class ySubs(ASyncGenericBase):
         
         self.subscribers = [Subscriber(address, asynchronous=asynchronous) for address in addresses]
         self._free_trials: Dict[str, Subscription] = {}
+        self._checksummed: Set[EthAddress] = set()
     
     ##########
     # System #
@@ -133,7 +137,7 @@ class ySubs(ASyncGenericBase):
             raise SignerNotProvided(self, headers)
         if "X-Signature" not in headers or not headers["X-Signature"]:
             raise SignatureNotProvided(self, headers)
-        return await self.validate_signature(headers["X-Signer"], headers["X-Signature"], sync=False)
+        return await self.validate_signature(self._checksum(headers["X-Signer"]), headers["X-Signature"], sync=False)
     
     ###############
     # Middlewares #
@@ -207,3 +211,14 @@ class ySubs(ASyncGenericBase):
         if isinstance(hatch, bool):
             return hatch
         raise TypeError(f"_headers_escape_hatch must return a boolean value or an awaitable that returns a boolean when awaited. Yours returned {hatch}")
+
+    def _checksum(self, signer: str) -> EthAddress:
+        if signer not in self._checksummed:
+            try:
+                signer = convert.to_address(signer)
+            except ValueError as e:
+                if "is not a valid ETH address" not in e:
+                    raise e
+                raise SignerInvalid(signer)
+            self._checksummed.add(signer)
+        return signer

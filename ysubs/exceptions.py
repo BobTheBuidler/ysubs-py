@@ -12,7 +12,11 @@ class SignerNotProvided(SignatureError):
         msg = f'You must subscribe to a plan at {ysubs.url} and pass the wallet address that signed the msg as header param "X-Signer\n\n"'
         msg += f'Your headers: {headers}'
         super().__init__(msg)
-        
+
+class SignerInvalid(SignatureError):
+    def __init__(self, signer: str):
+        super().__init__(f"The X-Signer header you provided ({signer}) is not a valid address.")
+    
 class SignatureNotProvided(SignatureError):
     def __init__(self, ysubs: "ySubs", headers: dict):
         msg = f'You must subscribe to a plan at {ysubs.url} and pass the provided signature as header param "X-Signature\n\n"'
