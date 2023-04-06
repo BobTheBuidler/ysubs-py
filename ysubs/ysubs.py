@@ -129,9 +129,9 @@ class ySubs(ASyncGenericBase):
         if await self._should_use_headers_escape_hatch(headers):
             # Escape hatch activated. Reuest will pass thru ySubs
             return True
-        if "X-Signer" not in headers:
+        if "X-Signer" not in headers or not headers["X-Signer"]:
             raise SignerNotProvided(self, headers)
-        if "X-Signature" not in headers:
+        if "X-Signature" not in headers or not headers["X-Signature"]:
             raise SignatureNotProvided(self, headers)
         return await self.validate_signature(headers["X-Signer"], headers["X-Signature"], sync=False)
     
