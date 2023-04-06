@@ -170,7 +170,7 @@ class ySubs(ASyncGenericBase):
                 if self_mw.__is_documenation(request.url.path) or await self._should_use_requests_escape_hatch(request):
                     return await call_next(request)
                 try:
-                    user_limiter = await self.validate_signature_from_headers(request.headers)
+                    user_limiter = await self.validate_signature_from_headers(request.headers, sync=False)
                     if user_limiter is True:
                         return await call_next(request)
                     if sentry_sdk:
