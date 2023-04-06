@@ -25,8 +25,8 @@ class Subscription:
     
     def __clear_stale(self) -> None:
         t = time()
-        self.requests_this_minute = [_t for _t in self.requests_this_minute if t - _t > 60]
-        self.requests_this_day = [_t for _t in self.requests_this_minute if t - _t > 60 * 60 * 24]
+        self.requests_this_minute = [_t for _t in self.requests_this_minute if t - _t < 60]
+        self.requests_this_day = [_t for _t in self.requests_this_minute if t - _t < 60 * 60 * 24]
     
     def __make_request(self) -> None:
         t = time()
