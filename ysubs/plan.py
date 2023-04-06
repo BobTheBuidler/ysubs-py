@@ -30,6 +30,8 @@ class Plan:
 
 class FreeTrial(Plan):
     def __init__(self, rate_limit_per_minute: int):
+        if not rate_limit_per_minute > 0:
+            raise ValueError(f"'rate_limit_per_minute' must be a positive integer. You passed {rate_limit_per_minute}")
         super().__init__(
             name="Free Trial",
             price=0,
