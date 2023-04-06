@@ -9,7 +9,8 @@ class Subscription:
     def __init__(self, user_wallet: str, plan: Plan) -> None:
         self.user = user_wallet
         self.plan = plan
-        self.checkpoint = 0
+        self.requests_this_day = []
+        self.requests_this_minute = []
     
     def __repr__(self) -> str:
         return f"<Subscription {self.user} {self.plan}>"
@@ -17,22 +18,46 @@ class Subscription:
     def __enter__(self):
         if self.should_rate_limit:
             raise TooManyRequests(self.time_til_next_request)
+        self.__make_request()
     
     def __exit__(self, *_):
         pass
     
-    @property
-    def should_rate_limit(self) -> bool:
-        return self.time_since_last_request < self.plan.seconds_per_request
+    def __clear_stale(self) -> None:
+        t = time()
+        self.requests_this_minute = [_t for _t in self.requests_this_minute if t - _t > 60]
+        self.requests_this_day = [_t for _t in self.requests_this_minute if t - _t > 60 * 60 * 24]
+    
+    def __make_request(self) -> None:
+        t = time()
+        self.requests_this_minute.append(t)
+        self.requests_this_day.append(t)
     
     @property
-    def time_since_last_request(self) -> float:
-        return time() - self.checkpoint
+    def should_rate_limit(self) -> bool:
+        return (self.daily_limit_reached or self.minute_limit_reached) is False
     
     @property
     def time_til_next_request(self) -> float:
-        next = self.checkpoint + self.plan.seconds_per_request
-        return next if next >= 0 else 0
+        if self.should_rate_limit is False:
+            return 0
+        try:
+            return max([
+                self.requests_this_minute[0] + 60,
+                self.requests_this_day[0] + 60 * 60 * 24,
+            ])
+        except IndexError:
+            return 0
+    
+    @property
+    def daily_limit_reached(self) -> bool:
+        self.__clear_stale()
+        return len(self.requests_this_day) > self.plan.requests_per_day
+    
+    @property
+    def minute_limit_reached(self) -> bool:
+        self.__clear_stale()
+        return len(self.requests_this_minute) > self.plan.requests_per_minute
 
 
 class SubscriptionsLimiter:
