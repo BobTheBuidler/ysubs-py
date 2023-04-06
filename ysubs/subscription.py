@@ -4,6 +4,9 @@ from typing import List
 from ysubs.exceptions import TooManyRequests
 from ysubs.plan import Plan
 
+ONE_MINUTE = 60
+ONE_HOUR = ONE_MINUTE * 60
+ONE_DAY = ONE_HOUR * 24
 
 class Subscription:
     def __init__(self, user_wallet: str, plan: Plan) -> None:
@@ -25,8 +28,8 @@ class Subscription:
     
     def __clear_stale(self) -> None:
         t = time()
-        self.requests_this_minute = [_t for _t in self.requests_this_minute if t - _t < 60]
-        self.requests_this_day = [_t for _t in self.requests_this_minute if t - _t < 60 * 60 * 24]
+        self.requests_this_minute = [_t for _t in self.requests_this_minute if t - _t < ONE_MINUTE]
+        self.requests_this_day = [_t for _t in self.requests_this_minute if t - _t < ONE_DAY]
     
     def __make_request(self) -> None:
         t = time()
@@ -40,9 +43,9 @@ class Subscription:
     @property
     def time_til_next_request(self) -> float:
         if self.daily_limit_reached:
-            return self.requests_this_day[0] + 60 * 60 * 24
+            return ONE_DAY - (time() - self.requests_this_day[0])
         elif self.minute_limit_reached:
-            return self.requests_this_minute[0] + 60
+            return ONE_MINUTE - (time() - self.requests_this_minute[0])
         return 0
     
     @property
