@@ -35,7 +35,7 @@ class Subscription:
     
     @property
     def should_rate_limit(self) -> bool:
-        return (self.daily_limit_reached or self.minute_limit_reached) is False
+        return self.daily_limit_reached or self.minute_limit_reached
     
     @property
     def time_til_next_request(self) -> float:
