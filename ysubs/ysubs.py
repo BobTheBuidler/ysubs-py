@@ -104,7 +104,7 @@ class ySubs(ASyncGenericBase):
         """
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
         """
-        active_subscriptions = [sub for subs in await asyncio.gather(*[subscriber.get_active_subscripions(signer, sync=False) for subscriber in self.subscribers]) for sub in subs if sub]
+        active_subscriptions = [sub for subs in await asyncio.gather(*[subscriber.get_active_subscriptions(signer, sync=False) for subscriber in self.subscribers]) for sub in subs if sub]
         if not active_subscriptions:
             if self.free_trial is not None:
                 active_subscriptions.append(self._get_free_trial(signer))
