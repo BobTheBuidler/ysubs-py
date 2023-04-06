@@ -9,9 +9,9 @@ from ysubs import _config
 from ysubs.exceptions import MalformedSignature, SignatureInvalid
 
 
-def validate_signer_with_signature(signer: str, signature: str, *, message: Optional[str] = None) -> None:
+def validate_signer_with_signature(signer: str, signature: str) -> None:
     try:
-        if signer == Account.recover_message(message or _config.UNSIGNED_MESSAGE, signature=signature):
+        if signer == Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature):
             return
         raise SignatureInvalid(signer, signature)
     except binascii.Error as e:
