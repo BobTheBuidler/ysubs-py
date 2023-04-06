@@ -48,12 +48,12 @@ class Subscription:
     @property
     def daily_limit_reached(self) -> bool:
         self.__clear_stale()
-        return len(self.requests_this_day) > self.plan.requests_per_day
+        return len(self.requests_this_day) >= self.plan.requests_per_day
     
     @property
     def minute_limit_reached(self) -> bool:
         self.__clear_stale()
-        return len(self.requests_this_minute) > self.plan.requests_per_minute
+        return len(self.requests_this_minute) >= self.plan.requests_per_minute
 
 
 class SubscriptionsLimiter:
