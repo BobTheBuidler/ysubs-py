@@ -19,8 +19,8 @@ class Subscription:
         return f"<Subscription {self.user} {self.plan}>"
     
     def __enter__(self):
-        if self.should_rate_limit:
-            raise TooManyRequests(self.time_til_next_request)
+        if time_to_next := self.time_til_next_request:
+            raise TooManyRequests(time_to_next)
         self.__make_request()
     
     def __exit__(self, *_):
@@ -43,9 +43,13 @@ class Subscription:
     @property
     def time_til_next_request(self) -> float:
         if self.daily_limit_reached:
-            return ONE_DAY - (time() - self.requests_this_day[0])
+            next = ONE_DAY - (time() - self.requests_this_day[0])
+            if next > 0: # potential race condition
+                return next
         elif self.minute_limit_reached:
-            return ONE_MINUTE - (time() - self.requests_this_minute[0])
+            next = ONE_MINUTE - (time() - self.requests_this_minute[0])
+            if next > 0: # potential race condition
+                return next
         return 0
     
     @property
@@ -71,7 +75,10 @@ class SubscriptionsLimiter:
                 return
             except TooManyRequests:
                 pass
-        raise TooManyRequests(min(subscription.time_til_next_request for subscription in self.subscriptions))
+        next = min(subscription.time_til_next_request for subscription in self.subscriptions)
+        if next <= 0: # potential race condition
+            return
+        raise TooManyRequests(next)
     
     def __exit__(self, *_) -> None:
         # NOTE: exiting a Subscription does nothing so we don't need to do that here.
