@@ -27,15 +27,15 @@ class SubscriptionsLimiter:
     def __init__(self, subscriptions: List[Subscription]) -> None:
         self.subscriptions = subscriptions
     
-    def __enter__(self) -> None:
+    async def __aenter__(self) -> None:
         """We will enter this object before each request a user makes."""
         for subscription in self.subscriptions:
             try:
-                subscription.__enter__()
-                return
+                async with subscription:
+                    return
             except TooManyRequests:
                 pass
-        next = min(subscription.time_til_next_request for subscription in self.subscriptions)
+        next = min(await asyncio.gather(*[UserRequest.next(subscription) for subscription in self.subscriptions]))
         if next <= 0: # potential race condition
             return
         raise TooManyRequests(next)
