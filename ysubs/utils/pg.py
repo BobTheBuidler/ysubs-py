@@ -62,7 +62,7 @@ class UserRequest(db.Entity):
         return await asyncio.get_event_loop().run_in_executor(None, cls.__count_this_minute, address)
     
     @classmethod
-    async def next(cls, subscription: Subscription) -> int:
+    async def next(cls, subscription: "Subscription") -> int:
         next = min(await asyncio.gather(cls._time_til_next(subscription, "minute"), cls._time_til_next(subscription, "day")))
         return next if next > 0 else 0
     
