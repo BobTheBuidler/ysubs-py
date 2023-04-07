@@ -1,5 +1,6 @@
 import asyncio
 from functools import lru_cache
+from http import HTTPStatus
 from inspect import isawaitable
 from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
                     Set, TypeVar, Union)
@@ -168,6 +169,7 @@ class ySubs(ASyncGenericBase):
     def _get_starlette_middleware(self, response_cls: type):
         from starlette.middleware.base import BaseHTTPMiddleware
         from starlette.requests import HTTPConnection
+
         # NOTE: We don't want to block any files used for the documentation pages.
         do_not_block = ["/favicon.ico", "/openapi.json"]
         class SignatureMiddleware(BaseHTTPMiddleware):
@@ -180,12 +182,14 @@ class ySubs(ASyncGenericBase):
                         return await call_next(request)
                     if sentry_sdk:
                         sentry_sdk.set_user({'id': request.headers["X-Signer"]})
-                    with user_limiter:
+                    async with user_limiter:
                         return await call_next(request)
                 except BadInput as e:
-                    return response_cls(status_code=400, content={'message': str(e)})
-                except (SignatureError, TooManyRequests) as e:
-                    return response_cls(status_code=401, content={'message': str(e)})
+                    return response_cls(status_code=HTTPStatus.BAD_REQUEST, content={'message': str(e)})
+                except SignatureError as e:
+                    return response_cls(status_code=HTTPStatus.UNAUTHORIZED, content={'message': str(e)})
+                except TooManyRequests as e:
+                    return response_cls(status_code=HTTPStatus.TOO_MANY_REQUESTS, content={'message': str(e)})
                 
             def __is_documenation(self_mw, path: str):
                 """We don't want to block calls to the documentation pages."""
