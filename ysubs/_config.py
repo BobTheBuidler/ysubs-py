@@ -14,3 +14,6 @@ UNSIGNED_MESSAGE = encode_defunct(text=unsigned_message)
 
 # Specify for how long a validated signaure should remain cached, in seconds
 VALIDATION_INTERVAL = int(os.environ.get("YSUBS_VALIDATION_INTERVAL", 60 * 5))
+
+# Specify the file path for the creation of local ysubs database
+DB_PATH = os.environ.get("YSUBS_DB_PATH", '/root/.ysubs/ysubs.sqlite')
