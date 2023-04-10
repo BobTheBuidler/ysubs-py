@@ -40,6 +40,6 @@ class SubscriptionsLimiter:
             return
         raise TooManyRequests(next)
     
-    def __exit__(self, *_) -> None:
+    def __aexit__(self, *_) -> None:
         # NOTE: exiting a Subscription does nothing so we don't need to do that here.
         pass
