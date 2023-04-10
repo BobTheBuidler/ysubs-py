@@ -20,7 +20,7 @@ class Subscription:
             raise TooManyRequests(time_to_next)
         asyncio.create_task(UserRequest.record_request(self.user))
     
-    def __aexit__(self, *_):
+    async def __aexit__(self, *_):
         pass
 
 class SubscriptionsLimiter:
@@ -40,6 +40,6 @@ class SubscriptionsLimiter:
             return
         raise TooManyRequests(next)
     
-    def __aexit__(self, *_) -> None:
+    async def __aexit__(self, *_) -> None:
         # NOTE: exiting a Subscription does nothing so we don't need to do that here.
         pass
