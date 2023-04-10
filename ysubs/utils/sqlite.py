@@ -4,7 +4,7 @@ from time import time
 from typing import TYPE_CHECKING, Literal, Optional
 
 from brownie.convert.datatypes import EthAddress
-from pony.orm import Database, PrimaryKey, Required, db_session, select
+from pony.orm import Database, PrimaryKey, Required, Set, db_session, select
 
 from ysubs import _config
 from ysubs.utils.time import *
@@ -30,6 +30,7 @@ class User(db.Entity):
     
     user_id = PrimaryKey(int, auto=True)
     address = Required(str, unique=True)
+    requests = Set("UserRequest")
     
     @classmethod
     async def get_or_create_entity(cls, address: EthAddress) -> "User":
@@ -75,7 +76,7 @@ class UserRequest(db.Entity):
     _table_ = "user_requests"
     
     uid = PrimaryKey(int, auto=True)
-    user = Required(User, index=True)
+    user = Required(User, index=True, reverse="requests")
     timestamp = Required(float)
     
     @classmethod
