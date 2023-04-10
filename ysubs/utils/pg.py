@@ -72,7 +72,7 @@ class UserRequest(db.Entity):
     
     @classmethod
     async def _time_til_next(cls, subscription: "Subscription", limiter: Literal["minute", "day"]) -> float:
-        return await asyncio.get_event_loop().run_in_executor(None, cls.__time_til_next, subscription, limiter)
+        return await asyncio.get_event_loop().run_in_executor(None, cls.__time_til_next.__get__(cls, type), subscription, limiter)
     
     @db_session
     @classmethod
