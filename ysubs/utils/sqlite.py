@@ -105,3 +105,4 @@ class UserRequest(db.Entity):
     
 
 db.bind(provider='sqlite', filename=_config.DB_PATH, create_db=True)
+db.generate_mapping(create_tables=True)

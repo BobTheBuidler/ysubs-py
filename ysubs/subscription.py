@@ -3,7 +3,7 @@ from typing import List
 
 from ysubs.exceptions import TooManyRequests
 from ysubs.plan import Plan
-from ysubs.utils.pg import UserRequest
+from ysubs.utils.sqlite import UserRequest
 from ysubs.utils.time import *
 
 
