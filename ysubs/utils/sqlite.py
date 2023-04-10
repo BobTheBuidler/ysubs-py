@@ -72,7 +72,7 @@ def _count_this_minute(address: EthAddress) -> int:
 
 @db_session
 def _record_request(address: EthAddress) -> None:
-    UserRequest(user=User._get_or_create_entity(address), timestamp=time())
+    UserRequest(user=_get_or_create_user(address), timestamp=time())
         
 class UserRequest(db.Entity):
     _table_ = "user_requests"
