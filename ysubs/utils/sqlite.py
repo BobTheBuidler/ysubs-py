@@ -51,10 +51,12 @@ def _time_til_next(subscription: "Subscription", limiter: Literal["minute", "day
     if limiter == "minute":
         if _count_this_minute(subscription.user) < subscription.plan.requests_per_minute:
             return 0
-        next = ONE_MINUTE - (t - select(r.timestamp for r in UserRequest if r.user.address == subscription.user and t - r.timestamp < ONE_MINUTE).min())
+        least_recent = select(r.timestamp for r in UserRequest if r.user.address == subscription.user and t - r.timestamp < ONE_MINUTE).min()
+        next = ONE_MINUTE - (t - least_recent or 0)
     elif limiter == "day":
         _clear_stale_for(subscription.user)
-        next = ONE_DAY - (t - select(r.timestamp for r in UserRequest if r.user.address == subscription.user).min())
+        least_recent = select(r.timestamp for r in UserRequest if r.user.address == subscription.user).min()
+        next = ONE_DAY - (t - least_recent or 0)
     else:
         raise NotImplementedError(limiter)
     return next if next > 0 else 0
