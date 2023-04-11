@@ -55,5 +55,5 @@ class Subscriber(ASyncGenericBase):
     async def get_active_subscriptions(self, signer: str) -> List[Subscription]:
         plan_ids = await self.__active_plan_ids__(sync=False)
         ends = await asyncio.gather(*[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids])
-        now = datetime.utcnow()
+        now = datetime.now(tz=timezone.utc)
         return await asyncio.gather(*[self.get_subscription(signer, id) for end, id in zip(ends, plan_ids) if end and datetime.fromtimestamp(end, tz=timezone.utc) > now])
