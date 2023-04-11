@@ -1,6 +1,6 @@
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 import a_sync
@@ -35,7 +35,7 @@ class Subscriber(ASyncGenericBase):
     
     @a_sync.aka.property
     async def active_plan_ids(self) -> List[int]:
-        return list(range(1, await self.__plan_count__(sync=False)))
+        return list(range(1, await self.__plan_count__(sync=False) + 1))
     
     @a_sync.a_sync(cache_type='memory')
     async def get_plan(self, plan_id: int) -> Optional[Plan]:
@@ -56,4 +56,4 @@ class Subscriber(ASyncGenericBase):
         plan_ids = await self.__active_plan_ids__(sync=False)
         ends = await asyncio.gather(*[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids])
         now = datetime.utcnow()
-        return await asyncio.gather(*[self.get_subscription(signer, id) for end, id in zip(ends, plan_ids) if end and datetime.fromtimestamp(end) > now])
+        return await asyncio.gather(*[self.get_subscription(signer, id) for end, id in zip(ends, plan_ids) if end and datetime.fromtimestamp(end, tz=timezone.utc) > now])
