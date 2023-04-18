@@ -10,10 +10,9 @@ from dank_mids.brownie_patch import patch_contract
 from eth_typing import ChecksumAddress
 from semantic_version import Version
 
-from ysubs import _config
+from ysubs import _config, sentry
 from ysubs.plan import Plan
 from ysubs.subscription import Subscription
-from ysubs.utils import signatures
 from ysubs.utils.dank_mids import dank_w3
 
 
@@ -26,18 +25,22 @@ class Subscriber(ASyncGenericBase):
             self.contract = patch_contract(Contract.from_explorer(address), dank_w3)
     
     @a_sync.aka.cached_property
+    @sentry.trace
     async def version(self) -> Version:
         return Version(await self.contract.API_VERSION.coroutine())
     
     @a_sync.aka.property
+    @sentry.trace
     async def plan_count(self) -> int:
         return await self.contract.plan_count.coroutine()
     
     @a_sync.aka.property
+    @sentry.trace
     async def active_plan_ids(self) -> List[int]:
         return list(range(1, await self.__plan_count__(sync=False) + 1))
     
     @a_sync.a_sync(cache_type='memory')
+    @sentry.trace
     async def get_plan(self, plan_id: int) -> Optional[Plan]:
         if plan_id > 0:
             details = await self.contract.get_plan.coroutine(plan_id)
@@ -45,13 +48,16 @@ class Subscriber(ASyncGenericBase):
         raise ValueError(f"{plan_id} is not a valid plan_id.")
     
     @a_sync.a_sync(ram_cache_ttl=_config.VALIDATION_INTERVAL)
+    @sentry.trace
     async def get_all_plans(self) -> List[Plan]:
         return await asyncio.gather(*[self.get_plan(plan_id, sync=False) for plan_id in await self.__active_plan_ids__(sync=False)])
     
     @a_sync.a_sync(cache_type='memory')
+    @sentry.trace
     async def get_subscription(self, signer: str, plan_id: int) -> Subscription:
         return Subscription(signer, await self.get_plan(plan_id))
     
+    @sentry.trace
     async def get_active_subscriptions(self, signer: str) -> List[Subscription]:
         plan_ids = await self.__active_plan_ids__(sync=False)
         ends = await asyncio.gather(*[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids])

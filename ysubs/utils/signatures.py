@@ -5,10 +5,11 @@ import eth_keys.validation
 from brownie.convert.datatypes import EthAddress
 from eth_account import Account
 
-from ysubs import _config
+from ysubs import _config, sentry
 from ysubs.exceptions import MalformedSignature, SignatureInvalid
 
 
+@sentry.trace
 def validate_signer_with_signature(signer: EthAddress, signature: str) -> None:
     try:
         if signer == Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature):

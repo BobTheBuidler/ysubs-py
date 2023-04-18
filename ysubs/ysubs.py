@@ -87,6 +87,7 @@ class ySubs(ASyncGenericBase):
     # System #
     ##########
     
+    @sentry.trace
     async def get_all_plans(self) -> Dict[Subscriber, List[Plan]]:
         """
         Returns all Plans defined on each Subscriber.
@@ -102,6 +103,7 @@ class ySubs(ASyncGenericBase):
     # Informational #
     #################
     
+    @sentry.trace
     async def get_active_subscripions(self, signer: str, _raise: bool = True) -> List[Subscription]:
         """
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
@@ -118,10 +120,12 @@ class ySubs(ASyncGenericBase):
     # Validation #
     ##############
     
+    @sentry.trace
     async def get_limiter(self, signer: str, signature: str) -> SubscriptionsLimiter:
         signatures.validate_signer_with_signature(signer, signature)
         return SubscriptionsLimiter(await self.get_active_subscripions(signer, sync=False))
     
+    @sentry.trace
     async def validate_signature(self, signer: str, signature: str) -> SubscriptionsLimiter:
         """
         Returns all active subscriptions for the user who signed 'signature'
@@ -131,6 +135,7 @@ class ySubs(ASyncGenericBase):
         except NoActiveSubscriptions:
             raise SignatureNotAuthorized(self, signature)
 
+    @sentry.trace
     async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> SubscriptionsLimiter:
         sentry.set_user(headers)
         if await self._should_use_headers_escape_hatch(headers):
