@@ -10,6 +10,7 @@ from brownie import convert
 from brownie.convert.datatypes import EthAddress
 from eth_typing import ChecksumAddress
 
+from ysubs import sentry
 from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
                               SignatureNotAuthorized, SignatureNotProvided,
                               SignerInvalid, SignerNotProvided,
@@ -131,6 +132,7 @@ class ySubs(ASyncGenericBase):
             raise SignatureNotAuthorized(self, signature)
 
     async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> SubscriptionsLimiter:
+        sentry.set_user(headers)
         if await self._should_use_headers_escape_hatch(headers):
             # Escape hatch activated. Reuest will pass thru ySubs
             return True
