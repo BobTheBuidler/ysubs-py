@@ -193,7 +193,7 @@ class ySubs(ASyncGenericBase):
                 
             def __is_documenation(self_mw, path: str):
                 """We don't want to block calls to the documentation pages."""
-                return path.startswith("/docs") or path in do_not_block
+                return path.startswith("/docs") or path.startswith("/redoc") or path in do_not_block
         return SignatureMiddleware
     
     async def _should_use_requests_escape_hatch(self, request: "Request") -> bool:
