@@ -10,19 +10,19 @@ from dank_mids.brownie_patch import patch_contract
 from eth_typing import ChecksumAddress
 from semantic_version import Version
 
-from ysubs import _config, sentry
+from ysubs import _config
 from ysubs.plan import Plan
 from ysubs.subscription import Subscription
-from ysubs.utils.dank_mids import dank_w3
+from ysubs.utils import sentry, dank_mids
 
 
 class Subscriber(ASyncGenericBase):
     def __init__(self, address: ChecksumAddress, asynchronous: bool = False) -> None:
         self.asynchronous = asynchronous
         try:
-            self.contract = patch_contract(Contract(address), dank_w3)
+            self.contract = patch_contract(Contract(address), dank_mids.dank_w3)
         except ValueError:
-            self.contract = patch_contract(Contract.from_explorer(address), dank_w3)
+            self.contract = patch_contract(Contract.from_explorer(address), dank_mids.dank_w3)
     
     @a_sync.aka.cached_property
     @sentry.trace

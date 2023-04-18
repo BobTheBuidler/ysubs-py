@@ -10,7 +10,6 @@ from brownie import convert
 from brownie.convert.datatypes import EthAddress
 from eth_typing import ChecksumAddress
 
-from ysubs import sentry
 from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
                               SignatureNotAuthorized, SignatureNotProvided,
                               SignerInvalid, SignerNotProvided,
@@ -18,7 +17,7 @@ from ysubs.exceptions import (BadInput, NoActiveSubscriptions, SignatureError,
 from ysubs.plan import FreeTrial, Plan
 from ysubs.subscriber import Subscriber
 from ysubs.subscription import Subscription, SubscriptionsLimiter
-from ysubs.utils import signatures
+from ysubs.utils import sentry, signatures
 
 T = TypeVar('T')
 

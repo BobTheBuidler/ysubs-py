@@ -5,8 +5,9 @@ import eth_keys.validation
 from brownie.convert.datatypes import EthAddress
 from eth_account import Account
 
-from ysubs import _config, sentry
+from ysubs import _config
 from ysubs.exceptions import MalformedSignature, SignatureInvalid
+from ysubs.utils import sentry
 
 
 @sentry.trace
