@@ -5,7 +5,7 @@ from inspect import isawaitable
 from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
                     Set, TypeVar, Union)
 
-from a_sync import ASyncGenericBase
+import a_sync
 from brownie import convert
 from brownie.convert.datatypes import EthAddress
 from eth_typing import ChecksumAddress
@@ -35,7 +35,7 @@ except ImportError:
     sentry_sdk = None
 
 
-class ySubs(ASyncGenericBase):
+class ySubs(a_sync.ASyncGenericBase):
     def __init__(
         self,
         addresses: Iterable[ChecksumAddress],

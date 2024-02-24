@@ -4,9 +4,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 import a_sync
-from a_sync import ASyncGenericBase
-from brownie import Contract
-from dank_mids.brownie_patch import patch_contract
+import dank_mids
 from eth_typing import ChecksumAddress
 from semantic_version import Version
 
@@ -16,13 +14,13 @@ from ysubs.subscription import Subscription
 from ysubs.utils import sentry, dank_mids
 
 
-class Subscriber(ASyncGenericBase):
+class Subscriber(a_sync.ASyncGenericBase):
     def __init__(self, address: ChecksumAddress, asynchronous: bool = False) -> None:
         self.asynchronous = asynchronous
         try:
-            self.contract = patch_contract(Contract(address), dank_mids.dank_w3)
+            self.contract = dank_mids.Contract(address)
         except ValueError:
-            self.contract = patch_contract(Contract.from_explorer(address), dank_mids.dank_w3)
+            self.contract = dank_mids.Contract.from_explorer(address)
     
     @a_sync.aka.cached_property
     @sentry.trace

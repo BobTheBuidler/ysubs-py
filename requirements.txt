@@ -1,4 +1,4 @@
-dank_mids>=4.20.32
-eth-brownie>=1.18.1
-ez-a-sync>=0.1.6
+dank_mids>=4.20.79,<4.21
+eth-brownie>=1.18.1,<2
+ez-a-sync>=0.16.1,<1
 typing_extensions>=4.1.0
