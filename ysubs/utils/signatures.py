@@ -12,9 +12,7 @@ from ysubs.utils import sentry
 @sentry.trace
 def validate_signer_with_signature(signer: EthAddress, signature: str) -> None:
     try:
-        if signer == Account.recover_message(
-            _config.UNSIGNED_MESSAGE, signature=signature
-        ):
+        if signer == Account.recover_message(_config.UNSIGNED_MESSAGE, signature=signature):
             return
         raise SignatureInvalid(signer, signature)
     except binascii.Error as e:

@@ -58,20 +58,14 @@ class ySubs(a_sync.ASyncGenericBase):
         self.url = url
 
         if not isinstance(asynchronous, bool):
-            raise TypeError(
-                f"'asynchronous' must be boolean. You passed {asynchronous}"
-            )
+            raise TypeError(f"'asynchronous' must be boolean. You passed {asynchronous}")
         self.asynchronous = asynchronous
 
-        if free_trial_rate_limit is not None and not isinstance(
-            free_trial_rate_limit, int
-        ):
+        if free_trial_rate_limit is not None and not isinstance(free_trial_rate_limit, int):
             raise TypeError(
                 f"'free_trial_rate_limit' must be an integer or 'None'. You passed {free_trial_rate_limit}"
             )
-        self.free_trial = (
-            FreeTrial(free_trial_rate_limit) if free_trial_rate_limit else None
-        )
+        self.free_trial = FreeTrial(free_trial_rate_limit) if free_trial_rate_limit else None
 
         if _request_escape_hatch is not None and not callable(_request_escape_hatch):
             msg = "_request_escape_hatch must a callable that accepts a Request and returns either:\n\n"
@@ -82,16 +76,16 @@ class ySubs(a_sync.ASyncGenericBase):
         self._request_escape_hatch = _request_escape_hatch
 
         if _headers_escape_hatch is not None and not callable(_headers_escape_hatch):
-            msg = "_headers_escape_hatch must a callable that accepts a dict and returns either:\n\n"
+            msg = (
+                "_headers_escape_hatch must a callable that accepts a dict and returns either:\n\n"
+            )
             msg += " - a boolean value\n"
             msg += " - an awaitable that returns a boolean when awaited.\n\n"
             msg += f"You passed {_headers_escape_hatch}"
             raise TypeError(msg)
         self._headers_escape_hatch = _headers_escape_hatch
 
-        self.subscribers = [
-            Subscriber(address, asynchronous=asynchronous) for address in addresses
-        ]
+        self.subscribers = [Subscriber(address, asynchronous=asynchronous) for address in addresses]
         self._free_trials: dict[str, Subscription] = {}
         self._checksummed: set[EthAddress] = set()
 
@@ -118,9 +112,7 @@ class ySubs(a_sync.ASyncGenericBase):
     #################
 
     @sentry.trace
-    async def get_active_subscripions(
-        self, signer: str, _raise: bool = True
-    ) -> list[Subscription]:
+    async def get_active_subscripions(self, signer: str, _raise: bool = True) -> list[Subscription]:
         """
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
         """
@@ -149,14 +141,10 @@ class ySubs(a_sync.ASyncGenericBase):
     @sentry.trace
     async def get_limiter(self, signer: str, signature: str) -> SubscriptionsLimiter:
         signatures.validate_signer_with_signature(signer, signature)
-        return SubscriptionsLimiter(
-            await self.get_active_subscripions(signer, sync=False)
-        )
+        return SubscriptionsLimiter(await self.get_active_subscripions(signer, sync=False))
 
     @sentry.trace
-    async def validate_signature(
-        self, signer: str, signature: str
-    ) -> SubscriptionsLimiter:
+    async def validate_signature(self, signer: str, signature: str) -> SubscriptionsLimiter:
         """
         Returns all active subscriptions for the user who signed 'signature'
         """
@@ -250,11 +238,7 @@ class ySubs(a_sync.ASyncGenericBase):
 
             def __is_documenation(self_mw, path: str):
                 """We don't want to block calls to the documentation pages."""
-                return (
-                    path.startswith("/docs")
-                    or path.startswith("/redoc")
-                    or path in do_not_block
-                )
+                return path.startswith("/docs") or path.startswith("/redoc") or path in do_not_block
 
         return SignatureMiddleware
 

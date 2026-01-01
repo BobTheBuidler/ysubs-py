@@ -36,15 +36,11 @@ class User(db.Entity):
 
     @classmethod
     async def get_or_create_entity(cls, address: EthAddress) -> "User":
-        return await asyncio.get_event_loop().run_in_executor(
-            None, _get_or_create_user, address
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, _get_or_create_user, address)
 
     @classmethod
     async def get_user_id(cls, address: EthAddress) -> int:
-        return await asyncio.get_event_loop().run_in_executor(
-            None, _get_user_id, address
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, _get_user_id, address)
 
 
 @db_session
@@ -57,15 +53,10 @@ def _clear_stale_for(address: EthAddress, t: Optional[float] = None) -> None:
 
 
 @db_session
-def _time_til_next(
-    subscription: "Subscription", limiter: Literal["minute", "day"]
-) -> float:
+def _time_til_next(subscription: "Subscription", limiter: Literal["minute", "day"]) -> float:
     t = time()
     if limiter == "minute":
-        if (
-            _count_this_minute(subscription.user)
-            < subscription.plan.requests_per_minute
-        ):
+        if _count_this_minute(subscription.user) < subscription.plan.requests_per_minute:
             return 0
         least_recent = select(
             r.timestamp
@@ -93,9 +84,7 @@ def _count_this_day(address: EthAddress) -> int:
 @db_session
 def _count_this_minute(address: EthAddress) -> int:
     return select(
-        r
-        for r in UserRequest
-        if r.user.address == address and time() - r.timestamp < ONE_MINUTE
+        r for r in UserRequest if r.user.address == address and time() - r.timestamp < ONE_MINUTE
     ).count()
 
 
@@ -112,42 +101,29 @@ class UserRequest(db.Entity):
     timestamp = Required(float)
 
     @classmethod
-    async def clear_stale_for(
-        cls, address: EthAddress, t: Optional[float] = None
-    ) -> None:
-        return await asyncio.get_event_loop().run_in_executor(
-            None, _clear_stale_for, address, t
-        )
+    async def clear_stale_for(cls, address: EthAddress, t: Optional[float] = None) -> None:
+        return await asyncio.get_event_loop().run_in_executor(None, _clear_stale_for, address, t)
 
     @classmethod
     async def count_this_day(cls, address: EthAddress) -> int:
-        return await asyncio.get_event_loop().run_in_executor(
-            None, _count_this_day, address
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, _count_this_day, address)
 
     @classmethod
     async def count_this_minute(cls, address: EthAddress) -> int:
-        return await asyncio.get_event_loop().run_in_executor(
-            None, _count_this_minute, address
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, _count_this_minute, address)
 
     @classmethod
     async def next(cls, subscription: "Subscription") -> int:
         next = min(
             await asyncio.gather(
-                *[
-                    UserRequest._time_til_next(subscription, period)
-                    for period in ["minute", "day"]
-                ]
+                *[UserRequest._time_til_next(subscription, period) for period in ["minute", "day"]]
             )
         )
         return next if next > 0 else 0
 
     @classmethod
     async def record_request(cls, address: EthAddress) -> None:
-        return await asyncio.get_event_loop().run_in_executor(
-            None, _record_request, address
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, _record_request, address)
 
     @classmethod
     async def _time_til_next(
