@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import create_task, gather
 
 from ysubs.exceptions import TooManyRequests
 from ysubs.plan import Plan
@@ -16,7 +16,7 @@ class Subscription:
     async def __aenter__(self):
         if time_to_next := await UserRequest.next(self):
             raise TooManyRequests(time_to_next)
-        asyncio.create_task(UserRequest.record_request(self.user))
+        create_task(UserRequest.record_request(self.user))
 
     async def __aexit__(self, *_):
         pass
@@ -34,11 +34,7 @@ class SubscriptionsLimiter:
                     return
             except TooManyRequests:
                 pass
-        next = min(
-            await asyncio.gather(
-                *[UserRequest.next(subscription) for subscription in self.subscriptions]
-            )
-        )
+        next = min(await gather(*map(UserRequest.next, self.subscriptions)))
         if next <= 0:  # potential race condition
             return
         raise TooManyRequests(next)
