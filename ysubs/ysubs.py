@@ -2,7 +2,8 @@ from asyncio import gather
 from functools import lru_cache
 from http import HTTPStatus
 from inspect import isawaitable
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, Optional, TypeVar, Union
+from collections.abc import Callable
 from collections.abc import Awaitable, Iterable
 
 import a_sync
@@ -44,9 +45,9 @@ class ySubs(a_sync.ASyncGenericBase):
         addresses: Iterable[ChecksumAddress],
         url: str,
         asynchronous: bool = False,
-        free_trial_rate_limit: Optional[int] = None,
-        _request_escape_hatch: Optional[RequestEscapeHatch] = None,
-        _headers_escape_hatch: Optional[HeadersEscapeHatch] = None,
+        free_trial_rate_limit: int | None = None,
+        _request_escape_hatch: RequestEscapeHatch | None = None,
+        _headers_escape_hatch: HeadersEscapeHatch | None = None,
     ) -> None:
         """
         addresses: an iterable of addresses for Subscriber contracts that you have deployed for your program

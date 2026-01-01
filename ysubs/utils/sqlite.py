@@ -44,7 +44,7 @@ class User(db.Entity):
 
 
 @db_session
-def _clear_stale_for(address: EthAddress, t: Optional[float] = None) -> None:
+def _clear_stale_for(address: EthAddress, t: float | None = None) -> None:
     select(
         r
         for r in UserRequest
@@ -101,7 +101,7 @@ class UserRequest(db.Entity):
     timestamp = Required(float)
 
     @classmethod
-    async def clear_stale_for(cls, address: EthAddress, t: Optional[float] = None) -> None:
+    async def clear_stale_for(cls, address: EthAddress, t: float | None = None) -> None:
         return await get_event_loop().run_in_executor(None, _clear_stale_for, address, t)
 
     @classmethod

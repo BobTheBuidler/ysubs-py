@@ -38,7 +38,7 @@ class Subscriber(a_sync.ASyncGenericBase):
 
     @a_sync.a_sync(cache_type="memory")
     @sentry.trace
-    async def get_plan(self, plan_id: int) -> Optional[Plan]:
+    async def get_plan(self, plan_id: int) -> Plan | None:
         if plan_id > 0:
             details = await self.contract.get_plan.coroutine(plan_id)
             return Plan(**details.dict())
