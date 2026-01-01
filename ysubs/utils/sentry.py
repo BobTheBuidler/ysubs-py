@@ -6,13 +6,14 @@ try:
 except ImportError:
     sentry_sdk = None
 
-P = ParamSpec('P')
-T = TypeVar('T')
-    
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
 def trace(fn: Callable[P, T]) -> Callable[P, T]:
     return sentry_sdk.trace(fn) if sentry_sdk is not None else fn
 
+
 def set_user(headers: dict) -> None:
     if sentry_sdk and "X-Signer" in headers:
-        sentry_sdk.set_user({'id': headers["X-Signer"]})
-        
+        sentry_sdk.set_user({"id": headers["X-Signer"]})
