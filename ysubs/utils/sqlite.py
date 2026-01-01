@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import gather, get_event_loop
 from time import time
 from typing import TYPE_CHECKING, Literal, Optional
 
@@ -36,11 +36,11 @@ class User(db.Entity):
 
     @classmethod
     async def get_or_create_entity(cls, address: EthAddress) -> "User":
-        return await asyncio.get_event_loop().run_in_executor(None, _get_or_create_user, address)
+        return await get_event_loop().run_in_executor(None, _get_or_create_user, address)
 
     @classmethod
     async def get_user_id(cls, address: EthAddress) -> int:
-        return await asyncio.get_event_loop().run_in_executor(None, _get_user_id, address)
+        return await get_event_loop().run_in_executor(None, _get_user_id, address)
 
 
 @db_session
@@ -102,20 +102,20 @@ class UserRequest(db.Entity):
 
     @classmethod
     async def clear_stale_for(cls, address: EthAddress, t: Optional[float] = None) -> None:
-        return await asyncio.get_event_loop().run_in_executor(None, _clear_stale_for, address, t)
+        return await get_event_loop().run_in_executor(None, _clear_stale_for, address, t)
 
     @classmethod
     async def count_this_day(cls, address: EthAddress) -> int:
-        return await asyncio.get_event_loop().run_in_executor(None, _count_this_day, address)
+        return await get_event_loop().run_in_executor(None, _count_this_day, address)
 
     @classmethod
     async def count_this_minute(cls, address: EthAddress) -> int:
-        return await asyncio.get_event_loop().run_in_executor(None, _count_this_minute, address)
+        return await get_event_loop().run_in_executor(None, _count_this_minute, address)
 
     @classmethod
     async def next(cls, subscription: "Subscription") -> int:
         next = min(
-            await asyncio.gather(
+            await gather(
                 *[UserRequest._time_til_next(subscription, period) for period in ["minute", "day"]]
             )
         )
@@ -123,15 +123,13 @@ class UserRequest(db.Entity):
 
     @classmethod
     async def record_request(cls, address: EthAddress) -> None:
-        return await asyncio.get_event_loop().run_in_executor(None, _record_request, address)
+        return await get_event_loop().run_in_executor(None, _record_request, address)
 
     @classmethod
     async def _time_til_next(
         cls, subscription: "Subscription", limiter: Literal["minute", "day"]
     ) -> float:
-        return await asyncio.get_event_loop().run_in_executor(
-            None, _time_til_next, subscription, limiter
-        )
+        return await get_event_loop().run_in_executor(None, _time_til_next, subscription, limiter)
 
 
 db.bind(provider="sqlite", filename=_config.DB_PATH, create_db=True)
