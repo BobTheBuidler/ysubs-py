@@ -1,10 +1,8 @@
 import asyncio
-from typing import List
 
 from ysubs.exceptions import TooManyRequests
 from ysubs.plan import Plan
 from ysubs.utils.sqlite import UserRequest
-from ysubs.utils.time import *
 
 
 class Subscription:

@@ -6,7 +6,7 @@ from brownie.convert.datatypes import EthAddress
 from pony.orm import Database, PrimaryKey, Required, Set, db_session, select
 
 from ysubs import _config
-from ysubs.utils.time import *
+from ysubs.utils.time import ONE_DAY, ONE_MINUTE
 
 if TYPE_CHECKING:
     from ysubs.subscription import Subscription
