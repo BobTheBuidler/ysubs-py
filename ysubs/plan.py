@@ -1,8 +1,6 @@
 from typing import Optional
 
 
-
-
 class Plan:
     def __init__(
         self,
