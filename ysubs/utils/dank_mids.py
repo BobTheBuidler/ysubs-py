@@ -1,4 +1,3 @@
-
 from brownie import web3
 from dank_mids.helpers import setup_dank_w3_from_sync
 

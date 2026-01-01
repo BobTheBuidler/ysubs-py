@@ -1,7 +1,6 @@
-
-import asyncio
+from asyncio import gather
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 
 import a_sync
 import dank_mids
@@ -21,43 +20,56 @@ class Subscriber(a_sync.ASyncGenericBase):
             self.contract = dank_mids.Contract(address)
         except ValueError:
             self.contract = dank_mids.Contract.from_explorer(address)
-    
+
     @a_sync.aka.cached_property
     @sentry.trace
     async def version(self) -> Version:
         return Version(await self.contract.API_VERSION.coroutine())
-    
+
     @a_sync.aka.property
     @sentry.trace
     async def plan_count(self) -> int:
         return await self.contract.plan_count.coroutine()
-    
+
     @a_sync.aka.property
     @sentry.trace
-    async def active_plan_ids(self) -> List[int]:
+    async def active_plan_ids(self) -> list[int]:
         return list(range(1, await self.__plan_count__(sync=False) + 1))
-    
-    @a_sync.a_sync(cache_type='memory')
+
+    @a_sync.a_sync(cache_type="memory")
     @sentry.trace
     async def get_plan(self, plan_id: int) -> Optional[Plan]:
         if plan_id > 0:
             details = await self.contract.get_plan.coroutine(plan_id)
             return Plan(**details.dict())
         raise ValueError(f"{plan_id} is not a valid plan_id.")
-    
+
     @a_sync.a_sync(ram_cache_ttl=_config.VALIDATION_INTERVAL)
     @sentry.trace
-    async def get_all_plans(self) -> List[Plan]:
-        return await asyncio.gather(*[self.get_plan(plan_id, sync=False) for plan_id in await self.__active_plan_ids__(sync=False)])
-    
-    @a_sync.a_sync(cache_type='memory')
+    async def get_all_plans(self) -> list[Plan]:
+        return await gather(
+            *[
+                self.get_plan(plan_id, sync=False)
+                for plan_id in await self.__active_plan_ids__(sync=False)
+            ]
+        )
+
+    @a_sync.a_sync(cache_type="memory")
     @sentry.trace
     async def get_subscription(self, signer: str, plan_id: int) -> Subscription:
         return Subscription(signer, await self.get_plan(plan_id))
-    
+
     @sentry.trace
-    async def get_active_subscriptions(self, signer: str) -> List[Subscription]:
+    async def get_active_subscriptions(self, signer: str) -> list[Subscription]:
         plan_ids = await self.__active_plan_ids__(sync=False)
-        ends = await asyncio.gather(*[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids])
+        ends = await gather(
+            *[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids]
+        )
         now = datetime.now(tz=timezone.utc)
-        return await asyncio.gather(*[self.get_subscription(signer, id) for end, id in zip(ends, plan_ids) if end and datetime.fromtimestamp(end, tz=timezone.utc) > now])
+        return await gather(
+            *[
+                self.get_subscription(signer, id)
+                for end, id in zip(ends, plan_ids)
+                if end and datetime.fromtimestamp(end, tz=timezone.utc) > now
+            ]
+        )

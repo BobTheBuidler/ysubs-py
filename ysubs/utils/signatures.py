@@ -1,4 +1,3 @@
-
 import binascii
 
 import eth_keys.validation
@@ -20,5 +19,7 @@ def validate_signer_with_signature(signer: EthAddress, signature: str) -> None:
         raise MalformedSignature(e)
     except eth_keys.validation.ValidationError as e:
         if "Unexpected recoverable signature length:" in str(e):
-            raise MalformedSignature(f"The signature you provided does not have the correct length.")
+            raise MalformedSignature(
+                f"The signature you provided does not have the correct length."
+            )
         raise MalformedSignature(e)
