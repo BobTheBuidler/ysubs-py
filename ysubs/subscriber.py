@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import gather
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -47,7 +47,7 @@ class Subscriber(a_sync.ASyncGenericBase):
     @a_sync.a_sync(ram_cache_ttl=_config.VALIDATION_INTERVAL)
     @sentry.trace
     async def get_all_plans(self) -> list[Plan]:
-        return await asyncio.gather(
+        return await gather(
             *[
                 self.get_plan(plan_id, sync=False)
                 for plan_id in await self.__active_plan_ids__(sync=False)
@@ -62,11 +62,11 @@ class Subscriber(a_sync.ASyncGenericBase):
     @sentry.trace
     async def get_active_subscriptions(self, signer: str) -> list[Subscription]:
         plan_ids = await self.__active_plan_ids__(sync=False)
-        ends = await asyncio.gather(
+        ends = await gather(
             *[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids]
         )
         now = datetime.now(tz=timezone.utc)
-        return await asyncio.gather(
+        return await gather(
             *[
                 self.get_subscription(signer, id)
                 for end, id in zip(ends, plan_ids)
