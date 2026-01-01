@@ -5,6 +5,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name='ysubs-py',
+    python_requires=">=3.9,<3.14",
     packages=find_packages(),
     use_scm_version={
         "root": ".",
@@ -18,7 +19,5 @@ setup(
     url='https://github.com/BobTheBuidler/ysubs-py',
     license='MIT',
     install_requires=requirements,
-    setup_requires=[
-        'setuptools_scm',
-    ],
+    setup_requires=['setuptools_scm']
 )
