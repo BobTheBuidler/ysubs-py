@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import gather
 from functools import lru_cache
 from http import HTTPStatus
 from inspect import isawaitable
@@ -98,7 +98,7 @@ class ySubs(a_sync.ASyncGenericBase):
         """
         Returns all Plans defined on each Subscriber.
         """
-        plans = await asyncio.gather(
+        plans = await gather(
             *[subscriber.get_all_plans(sync=False) for subscriber in self.subscribers]
         )
         return dict(zip(self.subscribers, plans))
@@ -118,7 +118,7 @@ class ySubs(a_sync.ASyncGenericBase):
         """
         active_subscriptions = [
             sub
-            for subs in await asyncio.gather(
+            for subs in await gather(
                 *[
                     subscriber.get_active_subscriptions(signer, sync=False)
                     for subscriber in self.subscribers
