@@ -1,6 +1,6 @@
 from asyncio import gather, get_event_loop
 from time import time
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal
 
 from brownie.convert.datatypes import EthAddress
 from pony.orm import Database, PrimaryKey, Required, Set, db_session, select

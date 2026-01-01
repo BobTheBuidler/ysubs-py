@@ -1,6 +1,5 @@
 from asyncio import gather
 from datetime import datetime, timezone
-from typing import Optional
 
 import a_sync
 import dank_mids

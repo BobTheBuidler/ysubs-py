@@ -2,7 +2,7 @@ from asyncio import gather
 from functools import lru_cache
 from http import HTTPStatus
 from inspect import isawaitable
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, TypeVar, Union
 from collections.abc import Callable
 from collections.abc import Awaitable, Iterable
 

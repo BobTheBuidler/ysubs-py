@@ -1,4 +1,4 @@
-from typing import Final, Optional, final
+from typing import Final, final
 
 
 class Plan:
