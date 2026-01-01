@@ -2,8 +2,9 @@ import asyncio
 from functools import lru_cache
 from http import HTTPStatus
 from inspect import isawaitable
-from typing import (Any, Awaitable, Callable, Dict, Iterable, List, Optional,
+from typing import (Any, Callable, Dict, List, Optional,
                     Set, TypeVar, Union)
+from collections.abc import Awaitable, Iterable
 
 import a_sync
 from brownie import convert
@@ -79,15 +80,15 @@ class ySubs(a_sync.ASyncGenericBase):
         self._headers_escape_hatch = _headers_escape_hatch
         
         self.subscribers = [Subscriber(address, asynchronous=asynchronous) for address in addresses]
-        self._free_trials: Dict[str, Subscription] = {}
-        self._checksummed: Set[EthAddress] = set()
+        self._free_trials: dict[str, Subscription] = {}
+        self._checksummed: set[EthAddress] = set()
     
     ##########
     # System #
     ##########
     
     @sentry.trace
-    async def get_all_plans(self) -> Dict[Subscriber, List[Plan]]:
+    async def get_all_plans(self) -> dict[Subscriber, list[Plan]]:
         """
         Returns all Plans defined on each Subscriber.
         """
@@ -103,7 +104,7 @@ class ySubs(a_sync.ASyncGenericBase):
     #################
     
     @sentry.trace
-    async def get_active_subscripions(self, signer: str, _raise: bool = True) -> List[Subscription]:
+    async def get_active_subscripions(self, signer: str, _raise: bool = True) -> list[Subscription]:
         """
         Returns all active subscriptions for either 'signer' or the user who signed 'signature'
         """
@@ -135,7 +136,7 @@ class ySubs(a_sync.ASyncGenericBase):
             raise SignatureNotAuthorized(self, signature)
 
     @sentry.trace
-    async def validate_signature_from_headers(self, headers: Dict[str, Any]) -> SubscriptionsLimiter:
+    async def validate_signature_from_headers(self, headers: dict[str, Any]) -> SubscriptionsLimiter:
         sentry.set_user(headers)
         if await self._should_use_headers_escape_hatch(headers):
             # Escape hatch activated. Reuest will pass thru ySubs

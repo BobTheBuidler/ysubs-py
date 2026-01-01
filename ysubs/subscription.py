@@ -24,7 +24,7 @@ class Subscription:
         pass
 
 class SubscriptionsLimiter:
-    def __init__(self, subscriptions: List[Subscription]) -> None:
+    def __init__(self, subscriptions: list[Subscription]) -> None:
         self.subscriptions = subscriptions
     
     async def __aenter__(self) -> None:

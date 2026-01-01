@@ -1,4 +1,3 @@
-
 from typing import Optional
 
 from eth_account.messages import encode_defunct

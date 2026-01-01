@@ -1,4 +1,3 @@
-
 import binascii
 
 import eth_keys.validation

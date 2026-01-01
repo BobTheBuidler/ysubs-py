@@ -1,4 +1,3 @@
-
 import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -34,7 +33,7 @@ class Subscriber(a_sync.ASyncGenericBase):
     
     @a_sync.aka.property
     @sentry.trace
-    async def active_plan_ids(self) -> List[int]:
+    async def active_plan_ids(self) -> list[int]:
         return list(range(1, await self.__plan_count__(sync=False) + 1))
     
     @a_sync.a_sync(cache_type='memory')
@@ -47,7 +46,7 @@ class Subscriber(a_sync.ASyncGenericBase):
     
     @a_sync.a_sync(ram_cache_ttl=_config.VALIDATION_INTERVAL)
     @sentry.trace
-    async def get_all_plans(self) -> List[Plan]:
+    async def get_all_plans(self) -> list[Plan]:
         return await asyncio.gather(*[self.get_plan(plan_id, sync=False) for plan_id in await self.__active_plan_ids__(sync=False)])
     
     @a_sync.a_sync(cache_type='memory')
@@ -56,7 +55,7 @@ class Subscriber(a_sync.ASyncGenericBase):
         return Subscription(signer, await self.get_plan(plan_id))
     
     @sentry.trace
-    async def get_active_subscriptions(self, signer: str) -> List[Subscription]:
+    async def get_active_subscriptions(self, signer: str) -> list[Subscription]:
         plan_ids = await self.__active_plan_ids__(sync=False)
         ends = await asyncio.gather(*[self.contract.subscription_end.coroutine(i, signer) for i in plan_ids])
         now = datetime.now(tz=timezone.utc)

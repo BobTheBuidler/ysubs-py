@@ -1,4 +1,3 @@
-
 from typing import TypeVar, Callable
 from typing_extensions import ParamSpec
 
