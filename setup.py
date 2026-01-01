@@ -5,7 +5,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="ysubs-py",
-    python_requires=">=3.9,<3.14",
+    python_requires=">=3.10,<3.14",
     packages=find_packages(),
     use_scm_version={
         "root": ".",

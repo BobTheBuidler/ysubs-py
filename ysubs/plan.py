@@ -1,4 +1,4 @@
-from typing import Final, Optional, final
+from typing import Final, final
 
 
 class Plan:
@@ -10,7 +10,7 @@ class Plan:
         time_interval: str,
         is_active: bool,
         # NOTE Not all subscribers support names.
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         self.name: Final = name
         self.price: Final = price
