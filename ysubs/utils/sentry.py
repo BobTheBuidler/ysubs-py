@@ -1,5 +1,6 @@
-from typing import TypeVar
 from collections.abc import Callable
+from typing import TypeVar
+
 from typing_extensions import ParamSpec
 
 try:

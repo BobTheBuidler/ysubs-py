@@ -9,7 +9,7 @@ from semantic_version import Version
 from ysubs import _config
 from ysubs.plan import Plan
 from ysubs.subscription import Subscription
-from ysubs.utils import sentry, dank_mids
+from ysubs.utils import dank_mids, sentry
 
 
 class Subscriber(a_sync.ASyncGenericBase):

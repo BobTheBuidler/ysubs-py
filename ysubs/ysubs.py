@@ -1,10 +1,9 @@
 from asyncio import gather
+from collections.abc import Awaitable, Callable, Iterable
 from functools import lru_cache
 from http import HTTPStatus
 from inspect import isawaitable
 from typing import Any, TypeVar, Union
-from collections.abc import Callable
-from collections.abc import Awaitable, Iterable
 
 import a_sync
 from brownie import convert
